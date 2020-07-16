@@ -180,15 +180,17 @@ class Body:
         return True
 
 class NSGAII:
-    def __init__(self, objectionFunctionList,limitList, precisionList, population, generation):
+    def __init__(self, objectionFunctionList,limitList, precisionList, population, generation, needArchive = False):
         self._objectionFunctionList = objectionFunctionList
         self._limitList = limitList
         self._precisionList = precisionList
         self._population = population
         self._generation = generation
         self._lastGroup = [] # 上一代种群
-        self._variationRate = 0.02
+        self._variationRate = 0.005
         self._paretoSet = []
+        self._needArchive = needArchive
+        self._archive = []
 
     def _getObjectionFunctionsValues(self, values):
         res = []
@@ -212,13 +214,23 @@ class NSGAII:
             b.SetFitness(values)
             self._lastGroup.append(b)
 
-    def _Domination(self, a, b):
+    def _Domination_small(self, a, b):
         size = len(a)
         flag = False
         for i in range(size):
             if a[i] > b[i]:
                 return False
             if a[i] < b[i]:
+                flag = True
+        return flag
+
+    def _Domination_big(self, a, b):
+        size = len(a)
+        flag = False
+        for i in range(size):
+            if a[i] < b[i]:
+                return False
+            if a[i] > b[i]:
                 flag = True
         return flag
 
@@ -235,9 +247,9 @@ class NSGAII:
             for j in range(size):
                 if(i == j):
                     continue
-                if(self._Domination(group[i].GetFitNess(), group[j].GetFitNess())):
+                if(self._Domination_small(group[i].GetFitNess(), group[j].GetFitNess())):
                     group[i].AddDomination(group[j])
-                elif(self._Domination(group[j].GetFitNess(), group[i].GetFitNess())):
+                elif(self._Domination_small(group[j].GetFitNess(), group[i].GetFitNess())):
                     group[i].AddNp()
                     if(justFitst):
                         break
@@ -380,6 +392,9 @@ class NSGAII:
         self._group = tmpGroup
         
         for i in range(len(tmpGroup)):
+            if(self._needArchive):
+                if(not self._bodyInList(tmpGroup[i], self._archive)):
+                    self._archive.append(tmpGroup[i].Copy())
             if(not self._bodyInList(tmpGroup[i], self._paretoSet)):
                 self._paretoSet.append(tmpGroup[i].Copy())
         F = self._FastNondominatedSort(self._paretoSet, True)
@@ -436,6 +451,11 @@ class NSGAII:
         res = []
         for i in range(len(self._paretoSet)):
             res.append(self._paretoSet[i].Decode())
+        if(self._needArchive):
+            archive = []
+            for i in range(len(self._archive)):
+                archive.append(self._archive[i].Decode())
+            return res, archive
         return res
 
 def funcA(xList):
@@ -451,8 +471,8 @@ def funcB(xList):
     return Sum
 
 if __name__ == "__main__":
-    nsga = NSGAII([funcA, funcB], [[-1000,1000]], [10], 200, 100)
-    g = nsga.Fit()
+    nsga = NSGAII([funcA, funcB], [[-10,10]], [10], 200, 30, True)
+    g, a = nsga.Fit()
     print(g)
     X = []
     Y = []
@@ -462,4 +482,12 @@ if __name__ == "__main__":
 
     plt.scatter(X,Y)
     plt.show()
-    
+
+    X = []
+    Y = []
+    for i in range(len(a)):
+        X.append(funcA(a[i]))
+        Y.append(funcB(a[i]))
+
+    plt.scatter(X,Y)
+    plt.show()

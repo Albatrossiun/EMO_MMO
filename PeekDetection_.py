@@ -1,17 +1,19 @@
-import numpy as np
-import math
-import random
 import matplotlib.pyplot as plt
+import numpy as np
+import random
 from mpl_toolkits.mplot3d import Axes3D
-MAX = 9999999.0
-MIN = -9999999.0
+import math
 
-def distance(a, b):
-    sum = 0 
-    size = len(a)
-    for i in range(size):
-        sum += (a[i] - b[i])**2
-    return sum**0.5
+MAX = 99999999.0
+MIN = -99999999.0
+
+colorList = ['k','r','y','g','c','b','m']
+
+def distance(a,b,x,y):
+    return ((a-x)**2 + (b-y)**2)**0.5
+
+def distance1(a,b,x,y):
+    return abs((a-x) + (b - y))
 
 def ADP(D):
     # 构造距离矩阵
@@ -22,7 +24,7 @@ def ADP(D):
             if(i == j):
                 dMatrix[i][j] = MAX
                 continue
-            dMatrix[j][i] = distance(D[i], D[j])
+            dMatrix[j][i] = distance(D[i][0],D[i][1],D[j][0],D[j][1])
             dMatrix[i][j] = dMatrix[j][i]
 
     # 初始化临接距离数组
@@ -58,7 +60,7 @@ def ADP(D):
             neighboringDistance[i] = tmpMin
             if(tmpMin > sigma):
                 sigma = tmpMin
-        # print(sigma,"sigma")
+        print(sigma,"sigma")
         # 初始化峰值数组ψ Psi
         Psi = []
         
@@ -71,7 +73,7 @@ def ADP(D):
                 break
         if(len(Psi) != 1):
             print("出现错误")
-            return None
+        
         # 遍历Psi数组
         i = 0
         while(True):
@@ -86,7 +88,7 @@ def ADP(D):
                 if(j in deletedPointSet):
                     continue
                 # 如果这个点和 当前选中的Psi里的点i 之间的距离小于sigma 把这个点添加到Psi里边
-                if(dMatrix[j][index] < sigma * 2):
+                if(dMatrix[j][index] < sigma * 3):
                     Psi.append(j)
                     deletedPointSet.add(j)
             # 从Psi里拿出下一个点
@@ -98,43 +100,40 @@ def ADP(D):
             tmp.append(D[Psi[i]])
         # 把这一组峰值装进全部峰值集合里
         P.append(tmp.copy())
+
     return P
 
-def PeekDection(PointList, valueList, nita = 0.03):
+#[x1,x2,y]
+def PeekDection(PointList, nita = 0.1):
     D = []
-    V = []
-    max = MIN
-    min = MAX
-    for i in range(len(valueList)):
-        if(valueList[i] > max):
-            max = valueList[i]
-        if(valueList[i] < min):
-            min = valueList[i]
+    max = -1
+    min = 9999
+    for i in range(len(PointList)):
+        if(PointList[i][2] > max):
+            max = PointList[i][2]
+        if(PointList[i][2] < min):
+            min = PointList[i][2]
     limit = max - nita * (max - min)
 
-    for i in range(len(valueList)):
-        if(valueList[i] >= limit):
+    for i in range(len(PointList)):
+        if(PointList[i][2] >= limit):
             D.append(PointList[i])
-            V.append(valueList[i])
-    allPeekSet = []
-    while(len(D) != 0):
-        print("峰值检测一次（二进制切割），检测的点的个数为[{}]".format(len(D)))
-        peekSet = ADP(D)
-        allPeekSet = allPeekSet + peekSet
-        min = MAX
-        ND = []
-        NV = []
-        for i in range(len(D)):
-            if(V[i] < min):
-                min = V[i]
-        limit = (max + min) / 2
-        for i in range(len(D)):
-            if(V[i] > limit):
-                ND.append(D[i])
-                NV.append(V[i])
-        D = ND
-        V = NV
-    return allPeekSet
+    print("从",len(D),"个点里")
+    rrr = ADP(D)
+    print("检测处",len(rrr),"个峰")
+    ax = plt.subplot(111, projection='3d')
+    for i in range(len(rrr)):
+        X = []
+        Y = []
+        Z = []
+        for j in range(len(rrr[i])):
+            X.append(rrr[i][j][0])
+            Y.append(rrr[i][j][1])
+            Z.append(rrr[i][j][2])
+        
+        ax.scatter(X, Y, Z, c = colorList[i % len(colorList)])
+    plt.show()
+
 
 def ThreeDImg(X,Y,Z):
     ax = plt.subplot(111, projection='3d')
@@ -142,26 +141,82 @@ def ThreeDImg(X,Y,Z):
     plt.show()
 
 def TwoDImg(X,Y):
+# 画散点图
     plt.scatter(X, Y, s=0.2)
     plt.show()
 
-def testFunction(x):
-    return math.cos(math.pi*0.3*x[0])**2 + math.sin(math.pi*0.3*x[1])**2
 
-if __name__ == "__main__":
-    X = []
-    V = []
-    for i in range(5000):
-        a = 0 + random.random() * 9
-        b = 0 + random.random() * 9
-        X.append([a,b])
-        V.append(testFunction(X[i]))
-    ThreeDImg([x[0] for x in X],[x[1] for x in X],V)
-    peekSet = PeekDection(X,V)
-    TMP = []
-    TV = []
-    for i in range(len(peekSet)):
-        for j in range(len(peekSet[i])):
-            TMP.append(peekSet[i][j])
-            TV.append(testFunction(peekSet[i][j]))
-    ThreeDImg([x[0] for x in TMP], [x[1] for x in TMP], TV)
+
+def objectionFunc(a,b):
+    return math.cos(math.pi*0.3*a)**2 + math.sin(math.pi*0.3*b)**2
+
+
+plt.rcParams['font.sans-serif']=['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+#matplotlib画图中中文显示会有问题，需要这两行设置默认字体
+ 
+#plt.xlabel('X')
+#plt.ylabel('Y')
+#plt.xlim(xmax=9,xmin=0)
+#plt.ylim(ymax=9,ymin=0)
+#画两条（0-9）的坐标轴并设置轴标签x，y
+ 
+x1 = np.random.normal(7,0.6,50) # 随机产生300个平均值为2，方差为1.2的浮点数
+y1 = np.random.normal(7,0.6,50) # 随机产生300个平均值为2，方差为1.2的浮点数
+
+x2 = np.random.normal(2,0.6,50)
+y2 = np.random.normal(2,0.6,50)
+
+x1 = np.hstack((x1,x2))
+y1 = np.hstack((y1,y2))
+
+x2 = np.random.normal(5,0.6,100)
+y2 = np.random.normal(5,0.6,100)
+
+x1 = np.hstack((x1,x2))
+y1 = np.hstack((y1,y2))
+
+x2 = np.random.normal(7,0.6,100)
+y2 = np.random.normal(1,0.6,100)
+
+x1 = np.hstack((x1,x2))
+y1 = np.hstack((y1,y2))
+
+X = []
+Y = []
+Z = []
+pointList = []
+for i in range(0):
+    point = []
+    point.append(x1[i])
+    point.append(y1[i])
+    point.append(objectionFunc(x1[i],y1[i]))
+    X.append(point[0])
+    Y.append(point[1])
+    Z.append(point[2])
+    pointList.append(point)
+for i in range(5000):
+    point = []
+    a = 0 + random.random() * 9
+    b = 0 + random.random() * 9
+    point.append(a)
+    point.append(b)
+    point.append(objectionFunc(a,b))
+    X.append(point[0])
+    Y.append(point[1])
+    Z.append(point[2])
+    pointList.append(point)
+'''
+pointList = [[1,1,1],[1,1.2,1],[1,1.4,1],
+[1.2,1,1],[1.2,1.2,1],[1.2,1.4,1],
+[1.4,1,1],[1.4,1.2,1],[1.4,1.4,1],
+[9,1,1],[9,1.2,1],[9,1.4,1],
+[9.2,1,1],[9.2,1.2,1],[9.2,1.4,1],
+[9.4,1,1],[9.4,1.2,1],[9.4,1.4,1]]
+'''
+PeekDection(pointList)
+
+ThreeDImg(X,Y,Z)
+TwoDImg(X,Y)
+
+
