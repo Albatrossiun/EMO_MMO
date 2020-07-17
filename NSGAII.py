@@ -1,4 +1,11 @@
 # coding=utf-8
+'''''''''''''''''''''
+# @FileName:NSGAII.py
+# @author:ZhaoXinYi
+# @version:0.0.1
+# @Date:2020.07.17
+# @BSD
+'''''''''''''''''''''
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D

@@ -1,3 +1,10 @@
+'''''''''''''''''''''
+# @FileName:EMOMMO.py
+# @author:ZhaoXinYi
+# @version:0.0.1
+# @Date:2020.07.17
+# @BSD
+'''''''''''''''''''''
 import NSGAII_FOREMOMMO as nsga
 import PeekDetection
 import JADE
@@ -9,7 +16,7 @@ class EMOMMO:
         self._limit = limit
         size = len(limit)
         self._precisionList = []
-        for i in range(size):
+        for _ in range(size):
             self._precisionList.append(5)
     
     # 求最大化问题
@@ -19,6 +26,7 @@ class EMOMMO:
         vlist = []
         for i in range(len(fitNessLandscape)):
             vlist.append(self._obejectionFunction(fitNessLandscape[i]))
+        
         peekSet = PeekDetection.PeekDection(fitNessLandscape, vlist)
         print("从[{}]个点中，找到[{}]个峰值集合".format(len(fitNessLandscape), len(peekSet)))
         bestPoint = []
@@ -34,8 +42,8 @@ class EMOMMO:
             localRange = []
             for j in range(len((self._limit))):
                 space = self._limit[j][1] -  self._limit[j][0]
-                left = bestPoint[i][j] - space * 0.05
-                right = bestPoint[i][j] + space * 0.05
+                left = bestPoint[i][j] - space * 0.025
+                right = bestPoint[i][j] + space * 0.025
                 if(left < self._limit[j][0]):
                     left = self._limit[j][0]
                 if(right > self._limit[j][1]):

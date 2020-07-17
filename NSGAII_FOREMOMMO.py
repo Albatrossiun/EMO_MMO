@@ -1,4 +1,11 @@
 # coding=utf-8
+'''''''''''''''''''''
+# @FileName:NSGAII_FOREMOMMO.py
+# @author:ZhaoXinYi
+# @version:0.0.1
+# @Date:2020.07.17
+# @BSD
+'''''''''''''''''''''
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -242,6 +249,7 @@ class NSGAII_FOREMOMMO:
                 sigma = min
         sigma = (1.0 - (t - 1) / self._generation) * sigma
         res = []
+
         for i in range(N):
             count = 0
             tsum = 0
@@ -253,7 +261,6 @@ class NSGAII_FOREMOMMO:
                     tsum += dMatrix[i][j]
             tsum = tsum / sigma
             res.append(tsum - count)
-
         return res
                 
     def _getObjectionFunctionsValues(self, group, t):
